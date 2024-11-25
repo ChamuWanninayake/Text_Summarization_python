@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Summarize .txt File</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    </head>    
+<body>
+    {% include 'header.html' %}
+
+    <div class="container mt-5 border p-3 rounded shadow">
+        <h1 class="text-center">Upload and Summarize Text File</h1>
+        <div class="row">
+            <div class="col-md-7">
+                <form id="fileForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="file_input">Upload your text (.txt) file here</label>
+                        <input type="file" class="form-control-file" id="file_input" name="file" accept=".txt">
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <button type="button" class="btn btn-primary" onclick="uploadAndSummarize()">Summarize File</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-md-5">
+                <div id="result-space" class="result-space">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+    
+    <script>
+        function clearResults() {
+            document.getElementById('result-space').innerHTML = '';
+        }
+        
+        function showLoading() {
+            document.getElementById('result-space').innerHTML = '<div class="text-center"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...</div>';
+        }
+    
+        function uploadAndSummarize() {
+            clearResults();
+            showLoading();
+            const fileInput = document.getElementById('file_input');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please upload a .txt file.');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+    
+            // Make AJAX request to the correct Flask backend route
+            fetch('/upload', {  // Ensure the route exists in your Flask backend
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('result-space').innerHTML = `<p>${data.error}</p>`;
+                } else {
+                    document.getElementById('result-space').innerHTML = `<h3>Summary:</h3><p>${data.summary}</p>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result-space').innerHTML = '<p>An error occurred while generating the summary.</p>';
+            });
+        }
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>End-to-End Text Summarization and Analysis System</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+
+<body>
+    {% include 'header.html' %}
+
+    <div class="container mt-5 border p-3 rounded shadow">
+        <h1 class="text-center">End-to-End Text Summarization and Analysis System</h1>
+        <p class="text-center" style="font-size: 18px;">
+            This system can summarize large corpora of text, extract keywords, perform topic modeling, and analyze
+            sentiment.
+        </p>
+        <div class="row">
+            <div class="col-md-7">
+                <form id="textForm">
+                    <div class="form-group">
+                        <label for="text_input">Paste your text here</label>
+                        <textarea class="form-control" id="text_input" name="text_input" rows="10"></textarea>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <button type="button" class="btn btn-primary" onclick="showSummary()">Summarize</button>
+                        <button type="button" class="btn btn-primary" onclick="showSentiment()">Analyze Sentiment</button>
+                        <button type="button" class="btn btn-primary" onclick="showKeywords()">Extract Keywords</button>
+                        <button type="button" class="btn btn-primary" onclick="showTopicModeling()">Topic Modeling</button>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('summarize_txt') }}" class="btn btn-primary2">Summarize Text File</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-md-5">
+                <div id="result-space" class="result-space"></div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+
+    <script>
+        function clearResults() {
+            document.getElementById('result-space').innerHTML = '';
+        }
+
+
+        function showLoading() {
+            document.getElementById('result-space').innerHTML = '<div class="text-center"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...</div>';
+        }
+
+        
+        function showSummary() {
+            clearResults();
+            const textInput = document.getElementById('text_input').value;
+
+            if (!textInput.trim()) {
+                alert('Please Enter Some Text To Summarize.');
+                return;
+            }
+
+            showLoading();
+    
+            // Make AJAX request to the Flask backend
+            fetch('/summarize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text_input: textInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    document.getElementById('result-space').innerHTML = `<h3>Summary:</h3><p>${data.summary}</p>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result-space').innerHTML = '<p>An error occurred while generating the summary.</p>';
+            });
+        }
+
+        
+        function showSentiment() {
+            clearResults();
+            showLoading();
+            const textInput = document.getElementById('text_input').value;
+
+            fetch('/sentiment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text_input: textInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result-space').innerHTML = `
+                    <i><h3>Your Sentiment </h3>
+                    <h1><b> ${data.sentiment}</b></h1></i>
+                    <img src="/static/products/${data.sentiment_image}" alt="${data.sentiment}" style="max-width: 300px;">
+                    
+                `;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result-space').innerHTML = '<p>An error occurred while analyzing sentiment.</p>';
+            });
+        }
+
+
+        function showKeywords() {
+            clearResults();
+            const textInput = document.getElementById('text_input').value;
+
+            if (!textInput.trim()) {
+                alert('Please enter some text for keyword extraction.');
+                return;
+            }
+
+            showLoading();
+    
+            // Make AJAX request to the Flask backend
+            fetch('/extract_keywords', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text_input: textInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    // No longer need scores, just display keywords
+                    const keywords = data.join(', ');  // Join keywords into a string
+                    document.getElementById('result-space').innerHTML = `<h3>Extracted Keywords:</h3><p>${keywords}</p>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result-space').innerHTML = '<p>An error occurred while extracting keywords.</p>';
+            })
+
+        }
+
+
+        function showTopicModeling() {
+            clearResults();
+            showLoading();
+            const textInput = document.getElementById('text_input').value;
+
+            fetch('/topic-modeling', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text_input: textInput })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    let topicsHTML = `<h3>Topic Modeling Results:</h3>`;
+                    console.log(data)
+                    if (data.top_topic.top_words && data.top_topic.top_words.length > 0) {
+                        topicsHTML += '<p>Top Words:</p><ul>';
+                        data.top_topic.top_words.forEach((word) => {
+                            topicsHTML += `<li>${word}</li>`;
+                        });
+                        topicsHTML += '</ul>';
+
+                        topicsHTML += `<p>Probability: ${data.top_topic.probability.toFixed(4)}</p>`;
+
+                        topicsHTML += `<h4>Generated Sentence:</h4><p>${data.generated_sentence} </p>`;
+                    } else {
+                        topicsHTML += '<p>No topics found.</p>';
+                    }
+
+                    document.getElementById('result-space').innerHTML = topicsHTML;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('result-space').innerHTML = '<p>An error occurred while performing topic modeling.</p>';
+                });
+        }
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</body>
+
+</html>

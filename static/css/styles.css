@@ -1,0 +1,43 @@
+body {
+    background-color: #f0f8ff; /* Light blue background */
+}
+
+h1 {
+    color: #007bff; /* Blue color for header */
+}
+
+.btn-primary {
+    background-color: #007bff; /* Bootstrap primary color */
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+    border-color: #004085;
+}
+
+textarea {
+    resize: none; /* Disable resizing */
+}
+
+.result-space {
+    border: 1px solid #007bff; /* Blue border */
+    border-radius: 5px;
+    padding: 15px;
+    height: 100%; /* Allow for flexible height */
+    background-color: #ffffff; /* White background for results */
+    overflow-y: auto; /* Scroll if content overflows */
+    margin-top: 10px; /* Reduced space above result area */
+}
+
+.btn-primary2 {
+    background-color: #007bff; /* Bootstrap primary color */
+    border-color: #007bff;
+    width: 100%;
+    color: white;
+}
+
+.btn-primary2:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+    border-color: #004085;
+}
